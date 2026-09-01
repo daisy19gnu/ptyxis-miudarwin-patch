@@ -1,39 +1,31 @@
-AUTOMATION.md
-CLAUDE_BUILD_REPORT.md
-DEBUG_LOG.md
-DELIVERABLES.md
-claude-continue.sh
-
 # Build artifacts
 *.tgz
 *.tar.gz
+*.tar.xz
 *.o
 *.so
+*.dylib
 
 # Build directories
 _build/
 build/
+.build/
+stage/
 
 # Editor files
 *.swp
 *~
 .DS_Store
 
-# Claude memory (private, not for version control)
-.claude/
-
-# Private notes and AI-specific files
-GEMINI.md
-CLAUDE.md
+# Private notes (URLs, local paths, work-in-progress reports)
 Github.md
 PACKAGE_README.md
 
-# Upstream git clones (use git submodule if needed)
+# Upstream source trees (fetched by build-ptyxis.sh)
 ptyxis/
-
-# 手で当てた古い譜 (patches/ に取って代わられた)
-src/
+ptyxis-*/
 
 # Port tarballs
 miudarwin-port/*.tgz
 miudarwin-port/*.tar.gz
+miudarwin-port/*.tar.xz
