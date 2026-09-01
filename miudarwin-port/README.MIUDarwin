@@ -1,0 +1,109 @@
+# Ptyxis for MIU Darwin
+
+Ptyxis is a modern terminal emulator for GNOME, built on GTK4 and libadwaita.
+This port targets MIU Darwin (Darwin/XNU, x86_64), cross compiled from Fedora.
+
+## Building
+
+MIU Darwin has no ports tree.  The equivalent of a port Makefile is a pair of
+shell scripts kept in the MIU Darwin tree:
+
+| OpenBSD ports        | MIU Darwin                       |
+|----------------------|----------------------------------|
+| `Makefile`           | `userland/ptyxis/build.sh`       |
+| `make install`       | `scripts/deploy-ptyxis.sh`       |
+| `WANTLIB`            | dependency check inside deploy    |
+| `distinfo`           | `distinfo` (hex SHA256, see below)|
+
+### Direct meson build
+
+Everything is cross compiled, so the meson cross file carries the compiler,
+the sysroot and the linker flags.  See `miu-cross.ini` in the MIU Darwin tree.
+
+```sh
+curl -O https://download.gnome.org/sources/ptyxis/50/ptyxis-50.1.tar.xz
+tar xf ptyxis-50.1.tar.xz
+cd ptyxis-50.1
+
+patch -p0 < /path/to/patches/patch-agent_meson_build
+patch -p0 < /path/to/patches/patch-src_ptyxis-tab_c
+
+meson setup build --cross-file /path/to/miu-cross.ini \
+      --prefix=/usr --libdir=lib
+ninja -C build
+DESTDIR=$PWD/stage meson install -C build --no-rebuild
+```
+
+### Installing into the image
+
+MIU Darwin runs from a 256 MB disk image, so installation means copying into
+that image rather than into a live filesystem:
+
+```sh
+scripts/deploy-ptyxis.sh
+```
+
+That script copies the binaries, the dylibs Ptyxis needs (libvte, liblz4,
+libc++), the desktop file, the icons and the Japanese translation, then
+recompiles the GSettings schemas.  It refuses to write anything if a dylib
+Ptyxis links against is missing from the image, checked with otool.
+
+## distinfo
+
+The checksum is written as **hex**, not the base64 form OpenBSD's `distinfo`
+uses.  MIU Darwin's build scripts verify with `sha256sum -c`, which expects
+hex, and a file nobody can check with the tools at hand is worse than no file.
+
+## MIU Darwin-Specific Patches
+
+### patch-agent_meson_build
+
+`agent/meson.build` includes `x86_64/force_link_glibc_2.17.h` for every
+x86_64 build, regardless of the operating system.  MIU Darwin has its own C
+library and no glibc symbol versioning, so the agent fails to build.
+
+The condition is written against `host_machine`, not `target_machine`: in
+meson, `target_machine` only carries a meaning when the artefact being built
+is itself a compiler.  For an application, the machine the code runs on is
+`host_machine`.  The distinction is not academic here, because the build is a
+cross compile.
+
+The OpenBSD port carries the same fix (written against `target_machine`,
+which is equivalent for a native build).
+
+### patch-src_ptyxis-tab_c
+
+`src/ptyxis-tab.c` uses `WIFEXITED`, `WEXITSTATUS`, `WIFSIGNALED` and
+`WTERMSIG` without including `<sys/wait.h>`.  POSIX places those macros in
+that header; the file builds on glibc only because another header happens to
+pull it in.
+
+The OpenBSD port carries the same fix.  Two ports hitting the same omission
+independently is a fair sign the include is simply missing upstream, so this
+one is also queued for submission (`upstream-patches/`).
+
+## Patches that were *not* needed
+
+### wordexp(3)
+
+The OpenBSD port disables `wordexp()` in `ptyxis_path_expand()`, because
+OpenBSD does not provide it.  MIU Darwin implements `wordexp(3)` in its own C
+library, so no patch is required here and the function takes its normal path.
+
+The implementation deliberately returns an error rather than silently
+ignoring what it cannot expand (pathname expansion, command substitution),
+which matches what Ptyxis expects: it falls back to a copy of the input when
+`wordexp()` fails.
+
+### pledge(2) / unveil(2)
+
+OpenBSD-specific sandboxing.  MIU Darwin has no equivalent yet.
+
+## Not available on MIU Darwin
+
+| Feature                          | Reason                          |
+|----------------------------------|---------------------------------|
+| Podman/Toolbox/Distrobox         | Linux container runtimes        |
+| libportal                        | Flatpak portals                 |
+| systemd scopes                   | systemd                         |
+| GPU rendering                    | cairo renderer only, no GL yet  |

@@ -1,0 +1,25 @@
+Ptyxis is a modern terminal emulator built for the container era,
+designed to seamlessly integrate with GNOME desktop environments.
+
+Key Features:
+- Modern GNOME interface built with GTK4 and libadwaita
+- Dynamic theming with extensive color palette support
+- Smart process tracking (sudo, SSH sessions)
+- Advanced tab management with live previews
+- Customizable keyboard shortcuts and user profiles
+- High-performance rendering with GPU acceleration
+- Terminal inspector for debugging
+- Encrypted scrollback buffers for enhanced privacy
+
+MIU Darwin-specific notes:
+This port targets MIU Darwin, a Darwin/XNU distribution with its own C
+library (libmiu, shipped as /usr/lib/libSystem.B.dylib) and its own Wayland
+compositor.  It is cross compiled from Fedora against GTK4 4.20.4,
+libadwaita 1.8.7 and VTE 0.80.5.
+
+Container integration features (Podman, Toolbox, Distrobox) are not
+available, as they require Linux-specific functionality.  Rendering uses the
+cairo renderer; there is no GPU acceleration yet.
+
+Unlike the OpenBSD port, wordexp(3) is not disabled: MIU Darwin implements
+it in its own C library, so ptyxis_path_expand() takes the normal path.

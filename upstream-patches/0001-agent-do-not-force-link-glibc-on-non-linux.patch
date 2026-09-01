@@ -1,0 +1,32 @@
+From: Minori IKEDA <daisy19@gmail.com>
+Subject: [PATCH] agent: do not force-link glibc symbols on non-Linux x86_64
+
+agent/meson.build includes x86_64/force_link_glibc_2.17.h whenever the CPU
+family is x86_64, without checking which operating system is being targeted.
+The header pins glibc symbol versions, so on any x86_64 system that does not
+use glibc the agent fails to build.
+
+This is not specific to one platform.  The OpenBSD port carries the same fix,
+and it was hit independently while porting Ptyxis to MIU Darwin, which has its
+own C library.
+
+The condition is written against host_machine rather than target_machine.  In
+meson, target_machine only carries a meaning when the artefact being built is
+itself a compiler; for an ordinary application the machine the code will run on
+is host_machine.  The two are identical for a native build, so this change is a
+no-op there, but they genuinely differ under cross compilation.
+---
+ agent/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/agent/meson.build
++++ b/agent/meson.build
+@@ -47,7 +47,7 @@
+
+ if get_option('libc-compat')
+ libc_compat = true
+-if target_machine.cpu_family() == 'x86_64'
++if target_machine.cpu_family() == 'x86_64' and host_machine.system() == 'linux'
+   ptyxis_agent_c_args += ['-include', 'x86_64/force_link_glibc_2.17.h']
+ else
+   libc_compat = false

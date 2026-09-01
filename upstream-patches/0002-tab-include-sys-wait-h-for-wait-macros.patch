@@ -1,0 +1,27 @@
+From: Minori IKEDA <daisy19@gmail.com>
+Subject: [PATCH] tab: include <sys/wait.h> for the wait status macros
+
+src/ptyxis-tab.c uses WIFEXITED, WEXITSTATUS, WIFSIGNALED and WTERMSIG but
+never includes <sys/wait.h>.  POSIX places those macros in that header; the
+file builds on glibc only because another header happens to pull it in.
+
+On systems whose headers follow the POSIX placement more strictly the file
+does not compile.  This was hit both by the OpenBSD port and while porting
+Ptyxis to MIU Darwin, which suggests the include is genuinely missing rather
+than either system being unusual.
+
+The include is harmless where the macros already arrive by another route.
+---
+ src/ptyxis-tab.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/src/ptyxis-tab.c
++++ b/src/ptyxis-tab.c
+@@ -24,6 +24,7 @@
+ #include <glib/gi18n.h>
+
+ #include <cairo.h>
++#include <sys/wait.h>
+
+ #ifdef __linux__
+ # include <libportal/portal.h>

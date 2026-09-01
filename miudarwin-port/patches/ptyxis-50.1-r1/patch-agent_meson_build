@@ -1,0 +1,23 @@
+Disable the glibc compatibility layer on non-Linux systems.
+
+MIU Darwin has its own C library (libmiu, shipped as /usr/lib/libSystem.B.dylib)
+and provides no glibc symbol versioning, so force_link_glibc_2.17.h must not be
+included.  Without this the build fails while compiling the agent.
+
+Note on host_machine vs target_machine: in meson, target_machine only has a
+meaning when the thing being built is itself a compiler.  For an ordinary
+application, the machine the code will run on is host_machine.  MIU Darwin is
+cross compiled from Fedora, so the two genuinely differ here and the condition
+has to be written against host_machine.
+
+--- agent/meson.build.orig
++++ agent/meson.build
+@@ -47,7 +47,7 @@
+
+ if get_option('libc-compat')
+ libc_compat = true
+-if target_machine.cpu_family() == 'x86_64'
++if target_machine.cpu_family() == 'x86_64' and host_machine.system() == 'linux'
+   ptyxis_agent_c_args += ['-include', 'x86_64/force_link_glibc_2.17.h']
+ else
+   libc_compat = false

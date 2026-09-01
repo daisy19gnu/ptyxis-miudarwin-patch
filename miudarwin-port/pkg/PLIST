@@ -1,0 +1,9 @@
+@bin bin/ptyxis
+@bin libexec/ptyxis-agent
+share/applications/org.gnome.Ptyxis.desktop
+share/glib-2.0/schemas/org.gnome.Ptyxis.gschema.xml
+share/icons/hicolor/scalable/apps/org.gnome.Ptyxis.svg
+share/icons/hicolor/symbolic/apps/org.gnome.Ptyxis-symbolic.svg
+share/locale/ja/LC_MESSAGES/ptyxis.mo
+@exec %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas
+@unexec %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas

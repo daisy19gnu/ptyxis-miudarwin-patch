@@ -1,0 +1,20 @@
+Add sys/wait.h for WIFEXITED, WEXITSTATUS, WIFSIGNALED and WTERMSIG.
+
+Upstream relies on these macros arriving indirectly through another header,
+which happens to hold on glibc.  POSIX places them in <sys/wait.h>, and MIU
+Darwin's headers follow that placement, so the file does not compile without
+the explicit include.
+
+The same omission is patched in the OpenBSD port, which is a fair sign the
+include is simply missing upstream rather than being a quirk of either system.
+
+--- src/ptyxis-tab.c.orig
++++ src/ptyxis-tab.c
+@@ -24,6 +24,7 @@
+ #include <glib/gi18n.h>
+
+ #include <cairo.h>
++#include <sys/wait.h>
+
+ #ifdef __linux__
+ # include <libportal/portal.h>
